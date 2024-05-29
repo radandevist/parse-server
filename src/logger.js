@@ -15,7 +15,8 @@ function defaultLogger() {
   return new LoggerController(adapter, null, options);
 }
 
-let logger = defaultLogger();
+// for: `import logger from './logger'`
+export let logger = defaultLogger();
 
 export function setLogger(aLogger) {
   logger = aLogger;
@@ -29,8 +30,11 @@ export function getLogger() {
 Object.defineProperty(module.exports, 'default', {
   get: getLogger,
 });
+// export let logger;
 
 // for: `import { logger } from './logger'`
 Object.defineProperty(module.exports, 'logger', {
   get: getLogger,
 });
+
+export default logger;

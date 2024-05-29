@@ -21,7 +21,7 @@ import {
 } from './Options/Definitions';
 import ParseServer from './cloud-code/Parse.Server';
 
-function removeTrailingSlash(str) {
+function removeTrailingSlash(str: string) {
   if (!str) {
     return str;
   }
@@ -32,6 +32,10 @@ function removeTrailingSlash(str) {
 }
 
 export class Config {
+  applicationId: string;
+  database: DatabaseController;
+  version: string;
+
   static get(applicationId: string, mount: string) {
     const cacheInfo = AppCache.get(applicationId);
     if (!cacheInfo) {
@@ -43,7 +47,7 @@ export class Config {
       if (key == 'databaseController') {
         config.database = new DatabaseController(cacheInfo.databaseController.adapter, config);
       } else {
-        config[key] = cacheInfo[key];
+        (config as any)[key] = cacheInfo[key];
       }
     });
     config.mount = removeTrailingSlash(mount);
@@ -55,7 +59,7 @@ export class Config {
     return config;
   }
 
-  static put(serverConfiguration) {
+  static put(serverConfiguration: any) {
     Config.validateOptions(serverConfiguration);
     Config.validateControllers(serverConfiguration);
     AppCache.put(serverConfiguration.appId, serverConfiguration);
@@ -92,7 +96,7 @@ export class Config {
     databaseOptions,
     extendSessionOnUse,
     allowClientClassCreation,
-  }) {
+  }: any) {
     if (masterKey === readOnlyMasterKey) {
       throw new Error('masterKey and readOnlyMasterKey should be different');
     }

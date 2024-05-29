@@ -3,7 +3,10 @@
  * @interface
  * @memberof module:SecurityCheck
  */
-class CheckGroup {
+export class CheckGroup {
+  _name: any;
+  _checks: any;
+
   constructor() {
     this._name = this.setName();
     this._checks = this.setChecks();
@@ -39,4 +42,4 @@ class CheckGroup {
   }
 }
 
-module.exports = CheckGroup;
+// module.exports = CheckGroup;

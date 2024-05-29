@@ -7,14 +7,14 @@ export type QueryOptions = {
   skip?: number,
   limit?: number,
   acl?: string[],
-  sort?: { [string]: number },
+  sort?: { [key: string]: number },
   count?: boolean | number,
   keys?: string[],
   op?: string,
   distinct?: boolean,
   pipeline?: any,
-  readPreference?: ?string,
-  hint?: ?mixed,
+  readPreference?: string,
+  hint?: any,
   explain?: Boolean,
   caseInsensitive?: boolean,
   action?: string,
@@ -31,7 +31,7 @@ export type FullQueryOptions = QueryOptions & UpdateQueryOptions;
 
 export interface StorageAdapter {
   canSortOnJoinTables: boolean;
-  schemaCacheTtl: ?number;
+  schemaCacheTtl?: number;
   enableSchemaHooks: boolean;
 
   classExists(className: string): Promise<boolean>;
@@ -48,34 +48,34 @@ export interface StorageAdapter {
     className: string,
     schema: SchemaType,
     object: any,
-    transactionalSession: ?any
+    transactionalSession?: any
   ): Promise<any>;
   deleteObjectsByQuery(
     className: string,
     schema: SchemaType,
     query: QueryType,
-    transactionalSession: ?any
+    transactionalSession?: any
   ): Promise<void>;
   updateObjectsByQuery(
     className: string,
     schema: SchemaType,
     query: QueryType,
     update: any,
-    transactionalSession: ?any
+    transactionalSession?: any
   ): Promise<[any]>;
   findOneAndUpdate(
     className: string,
     schema: SchemaType,
     query: QueryType,
     update: any,
-    transactionalSession: ?any
+    transactionalSession?: any
   ): Promise<any>;
   upsertOneObject(
     className: string,
     schema: SchemaType,
     query: QueryType,
     update: any,
-    transactionalSession: ?any
+    transactionalSession?: any
   ): Promise<any>;
   find(
     className: string,
@@ -98,7 +98,7 @@ export interface StorageAdapter {
     query: QueryType,
     readPreference?: string,
     estimate?: boolean,
-    hint?: mixed,
+    hint?: any,
     comment?: string
   ): Promise<number>;
   distinct(
@@ -111,24 +111,24 @@ export interface StorageAdapter {
     className: string,
     schema: any,
     pipeline: any,
-    readPreference: ?string,
-    hint: ?mixed,
+    readPreference?: string,
+    hint?: any,
     explain?: boolean,
     comment?: string
   ): Promise<any>;
-  performInitialization(options: ?any): Promise<void>;
+  performInitialization(options?: any): Promise<void>;
   watch(callback: () => void): void;
 
   // Indexing
-  createIndexes(className: string, indexes: any, conn: ?any): Promise<void>;
-  getIndexes(className: string, connection: ?any): Promise<void>;
+  createIndexes(className: string, indexes: any, conn?: any): Promise<void>;
+  getIndexes(className: string, connection?: any): Promise<void>;
   updateSchemaWithIndexes(): Promise<void>;
   setIndexesWithSchemaFormat(
     className: string,
     submittedIndexes: any,
     existingIndexes: any,
     fields: any,
-    conn: ?any
+    conn?: any
   ): Promise<void>;
   createTransactionalSession(): Promise<any>;
   commitTransactionalSession(transactionalSession: any): Promise<void>;

@@ -5,9 +5,10 @@
         "node": true,
         "es6": true
     },
-    "parser": "@babel/eslint-parser",
+    "parser": "@typescript-eslint/parser",
     "plugins": [
-        "flowtype"
+        "flowtype",
+        "@typescript-eslint"
     ],
     "parserOptions": {
         "ecmaVersion": 6,
@@ -25,7 +26,8 @@
         "space-infix-ops": "error",
         "no-useless-escape": "off",
         "require-atomic-updates": "off",
-        "object-curly-spacing": ["error", "always"]
+        "object-curly-spacing": ["error", "always"],
+        "@typescript-eslint/no-explicit-any": "warn"
     },
     "globals": {
         "Parse": true

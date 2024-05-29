@@ -29,8 +29,9 @@ import type {
   SchemaField,
   LoadSchemaOptions,
 } from './types';
+import _ from "lodash";
 
-const defaultColumns: { [string]: SchemaFields } = Object.freeze({
+const defaultColumns: { [key: string]: SchemaFields } = Object.freeze({
   // Contain the default columns for every parse object type (except _Join collection)
   _Default: {
     objectId: { type: 'String' },
@@ -216,7 +217,7 @@ const clpFieldsRegex = Object.freeze([
   roleRegex,
 ]);
 
-function validatePermissionKey(key, userIdRegExp) {
+function validatePermissionKey(key: any, userIdRegExp: any) {
   let matchesSome = false;
   for (const regEx of clpFieldsRegex) {
     if (key.match(regEx) !== null) {
@@ -235,7 +236,7 @@ function validatePermissionKey(key, userIdRegExp) {
   }
 }
 
-function validateProtectedFieldsKey(key, userIdRegExp) {
+function validateProtectedFieldsKey(key: any, userIdRegExp: any) {
   let matchesSome = false;
   for (const regEx of protectedFieldsRegex) {
     if (key.match(regEx) !== null) {
@@ -280,7 +281,7 @@ function validateCLP(perms: ClassLevelPermissions, fields: SchemaFields, userIdR
       );
     }
 
-    const operation = perms[operationKey];
+    const operation = (perms as any)[operationKey];
     // proceed with next operationKey
 
     // throws when root fields are of wrong type
@@ -408,9 +409,9 @@ function validatePointerPermission(fieldName: string, fields: Object, operation:
   //  only items that are pointers to _User are considered.
   if (
     !(
-      fields[fieldName] &&
-      ((fields[fieldName].type == 'Pointer' && fields[fieldName].targetClass == '_User') ||
-        fields[fieldName].type == 'Array')
+      (fields as any)[fieldName] &&
+      (((fields as any)[fieldName].type == 'Pointer' && (fields as any)[fieldName].targetClass == '_User') ||
+        (fields as any)[fieldName].type == 'Array')
     )
   ) {
     throw new Parse.Error(
@@ -481,7 +482,7 @@ const validNonRelationOrPointerTypes = [
   'Polygon',
 ];
 // Returns an error suitable for throwing if the type is invalid
-const fieldTypeIsInvalid = ({ type, targetClass }) => {
+const fieldTypeIsInvalid = ({ type, targetClass }: Record<string, any>) => {
   if (['Pointer', 'Relation'].indexOf(type) >= 0) {
     if (!targetClass) {
       return new Parse.Error(135, `type ${type} needs a class name`);
@@ -538,7 +539,7 @@ const convertAdapterSchemaToParseSchema = ({ ...schema }) => {
 class SchemaData {
   __data: any;
   __protectedFields: any;
-  constructor(allSchemas = [], protectedFields = {}) {
+  constructor(allSchemas: any[] = [], protectedFields = {}) {
     this.__data = {};
     this.__protectedFields = protectedFields;
     allSchemas.forEach(schema => {
@@ -548,10 +549,15 @@ class SchemaData {
       Object.defineProperty(this, schema.className, {
         get: () => {
           if (!this.__data[schema.className]) {
-            const data = {};
-            data.fields = injectDefaultSchema(schema).fields;
-            data.classLevelPermissions = deepcopy(schema.classLevelPermissions);
-            data.indexes = schema.indexes;
+            // const data = {};
+            // data.fields = injectDefaultSchema(schema).fields;
+            // data.classLevelPermissions = deepcopy(schema.classLevelPermissions);
+            // data.indexes = schema.indexes;
+            const data = {
+              fields: injectDefaultSchema(schema).fields,
+              classLevelPermissions: deepcopy(schema.classLevelPermissions),
+              indexes: schema.indexes
+            };
 
             const classProtectedFields = this.__protectedFields[schema.className];
             if (classProtectedFields) {
@@ -581,10 +587,15 @@ class SchemaData {
               fields: {},
               classLevelPermissions: {},
             });
-            const data = {};
-            data.fields = schema.fields;
-            data.classLevelPermissions = schema.classLevelPermissions;
-            data.indexes = schema.indexes;
+            // const data = {};
+            // data.fields = schema.fields;
+            // data.classLevelPermissions = schema.classLevelPermissions;
+            // data.indexes = schema.indexes;
+            const data = {
+              fields: schema.fields,
+              classLevelPermissions: schema.classLevelPermissions,
+              indexes: schema.indexes,
+            };
             this.__data[className] = data;
           }
           return this.__data[className];
@@ -666,10 +677,14 @@ const VolatileClassesSchemas = [
 ];
 
 const dbTypeMatchesObjectType = (dbType: SchemaField | string, objectType: SchemaField) => {
-  if (dbType.type !== objectType.type) return false;
-  if (dbType.targetClass !== objectType.targetClass) return false;
-  if (dbType === objectType.type) return true;
-  if (dbType.type === objectType.type) return true;
+  if (_.isString(dbType)) {
+    if (dbType === objectType.type) return true;
+  } else {
+    if (dbType.type !== objectType.type) return false;
+    if (dbType.targetClass !== objectType.targetClass) return false;
+    if (dbType.type === objectType.type) return true;
+  }
+
   return false;
 };
 
@@ -691,15 +706,15 @@ const ttl = {
 // the mongo format and the Parse format. Soon, this will all be Parse format.
 export default class SchemaController {
   _dbAdapter: StorageAdapter;
-  schemaData: { [string]: Schema };
-  reloadDataPromise: ?Promise<any>;
+  schemaData: { [key: string]: Schema };
+  reloadDataPromise?: Promise<any>;
   protectedFields: any;
   userIdRegEx: RegExp;
 
   constructor(databaseAdapter: StorageAdapter) {
     this._dbAdapter = databaseAdapter;
     const config = Config.get(Parse.applicationId);
-    this.schemaData = new SchemaData(SchemaCache.all(), this.protectedFields);
+    this.schemaData = new SchemaData(SchemaCache.all(), this.protectedFields) as any;
     this.protectedFields = config.protectedFields;
 
     const customIds = config.allowCustomObjectId;
@@ -1333,7 +1348,7 @@ export default class SchemaController {
   }
 
   // Tests that the class level permission let pass the operation for a given aclGroup
-  static testPermissions(classPermissions: ?any, aclGroup: string[], operation: string): boolean {
+  static testPermissions(classPermissions?: any, aclGroup: string[], operation: string): boolean {
     if (!classPermissions || !classPermissions[operation]) {
       return true;
     }
@@ -1353,8 +1368,8 @@ export default class SchemaController {
   }
 
   // Validates an operation passes class-level-permissions set in the schema
-  static validatePermission(
-    classPermissions: ?any,
+  static async validatePermission(
+    classPermissions?: any,
     className: string,
     aclGroup: string[],
     operation: string,
@@ -1441,7 +1456,7 @@ export default class SchemaController {
 
   // Returns the expected type for a className+key combination
   // or undefined if the schema is not set
-  getExpectedType(className: string, fieldName: string): ?(SchemaField | string) {
+  getExpectedType(className: string, fieldName: string): (SchemaField | string) {
     if (this.schemaData[className]) {
       const expectedType = this.schemaData[className].fields[fieldName];
       return expectedType === 'map' ? 'Object' : expectedType;
@@ -1490,7 +1505,7 @@ function buildMergedSchemaObject(existingFields: SchemaFields, putRequest: any):
       }
       const fieldIsDeleted = putRequest[oldField] && putRequest[oldField].__op === 'Delete';
       if (!fieldIsDeleted) {
-        newSchema[oldField] = existingFields[oldField];
+        (newSchema as any)[oldField] = existingFields[oldField];
       }
     }
   }
@@ -1499,7 +1514,7 @@ function buildMergedSchemaObject(existingFields: SchemaFields, putRequest: any):
       if (sysSchemaField.length > 0 && sysSchemaField.indexOf(newField) !== -1) {
         continue;
       }
-      newSchema[newField] = putRequest[newField];
+      (newSchema as any)[newField] = putRequest[newField];
     }
   }
   return newSchema;
@@ -1507,8 +1522,8 @@ function buildMergedSchemaObject(existingFields: SchemaFields, putRequest: any):
 
 // Given a schema promise, construct another schema promise that
 // validates this field once the schema loads.
-function thenValidateRequiredColumns(schemaPromise, className, object, query) {
-  return schemaPromise.then(schema => {
+function thenValidateRequiredColumns(schemaPromise: any, className: string, object: any, query: any) {
+  return schemaPromise.then((schema: any) => {
     return schema.validateRequiredColumns(className, object, query);
   });
 }
@@ -1518,7 +1533,7 @@ function thenValidateRequiredColumns(schemaPromise, className, object, query) {
 // type system.
 // The output should be a valid schema value.
 // TODO: ensure that this is compatible with the format used in Open DB
-function getType(obj: any): ?(SchemaField | string) {
+function getType(obj: any): (SchemaField | string) {
   const type = typeof obj;
   switch (type) {
     case 'boolean':
@@ -1527,7 +1542,7 @@ function getType(obj: any): ?(SchemaField | string) {
       return 'String';
     case 'number':
       return 'Number';
-    case 'map':
+    // case 'map':
     case 'object':
       if (!obj) {
         return undefined;
@@ -1544,7 +1559,7 @@ function getType(obj: any): ?(SchemaField | string) {
 // This gets the type for non-JSON types like pointers and files, but
 // also gets the appropriate type for $ operators.
 // Returns null if the type is unknown.
-function getObjectType(obj): ?(SchemaField | string) {
+function getObjectType(obj: any): (SchemaField | string) {
   if (obj instanceof Array) {
     return 'Array';
   }
