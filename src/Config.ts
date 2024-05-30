@@ -32,11 +32,13 @@ function removeTrailingSlash(str: string) {
 }
 
 export class Config {
-  applicationId: string;
-  database: DatabaseController;
-  version: string;
+  applicationId?: string;
+  database?: DatabaseController;
+  version?: string;
+  allowCustomObjectId?: any;
+  protectedFields?: any;
 
-  static get(applicationId: string, mount: string) {
+  static get(applicationId: string, mount?: string) {
     const cacheInfo = AppCache.get(applicationId);
     if (!cacheInfo) {
       return;
@@ -45,7 +47,7 @@ export class Config {
     config.applicationId = applicationId;
     Object.keys(cacheInfo).forEach(key => {
       if (key == 'databaseController') {
-        config.database = new DatabaseController(cacheInfo.databaseController.adapter, config);
+        config.database = new DatabaseController(cacheInfo.databaseController.adapter, config as any);
       } else {
         (config as any)[key] = cacheInfo[key];
       }
@@ -142,7 +144,7 @@ export class Config {
     this.validateAllowClientClassCreation(allowClientClassCreation);
   }
 
-  static validateCustomPages(customPages) {
+  static validateCustomPages(customPages: any) {
     if (!customPages) return;
 
     if (Object.prototype.toString.call(customPages) !== '[object Object]') {
@@ -157,7 +159,7 @@ export class Config {
     publicServerURL,
     emailVerifyTokenValidityDuration,
     emailVerifyTokenReuseIfValid,
-  }) {
+  }: any) {
     const emailAdapter = userController.adapter;
     if (verifyUserEmails) {
       this.validateEmailConfiguration({
@@ -170,7 +172,7 @@ export class Config {
     }
   }
 
-  static validateRequestKeywordDenylist(requestKeywordDenylist) {
+  static validateRequestKeywordDenylist(requestKeywordDenylist: any) {
     if (requestKeywordDenylist === undefined) {
       requestKeywordDenylist = requestKeywordDenylist.default;
     } else if (!Array.isArray(requestKeywordDenylist)) {

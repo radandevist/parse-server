@@ -9,6 +9,7 @@ var batch = require('./batch'),
   path = require('path'),
   fs = require('fs');
 
+import { Request, Response } from 'express';
 import { ParseServerOptions, LiveQueryServerOptions } from './Options';
 import defaults from './defaults';
 import * as logging from './logger';
@@ -46,6 +47,10 @@ import CheckRunner from './Security/CheckRunner';
 import Deprecator from './Deprecator/Deprecator';
 import { DefinedSchemas } from './SchemaMigrations/DefinedSchemas';
 import OptionsDefinitions from './Options/Definitions';
+import DatabaseController from "./Controllers/DatabaseController";
+import HooksController from "./Controllers/HooksController";
+import CacheController from "./Controllers/CacheController";
+import _ from "lodash";
 
 // Mutate the Parse object to add the Cloud Code handlers
 addParseCloud();
@@ -53,6 +58,16 @@ addParseCloud();
 // ParseServer works like a constructor of an express app.
 // https://parseplatform.org/parse-server/api/master/ParseServerOptions.html
 class ParseServer {
+  config: ParseServerOptions & {
+    masterKeyIpsStore: Map<string, string>;
+    maintenanceKeyIpsStore: Map<string, string>;
+    state: 'initialized' | 'starting' | 'ok' | 'error';
+    // databaseController: DatabaseController;
+    // hooksController: HooksController,
+    // cacheController: CacheController;
+  } & ReturnType<typeof controllers.getControllers>;
+  _app: any;
+
   /**
    * @constructor
    * @param {ParseServerOptions} options the parse server initialization options
@@ -63,8 +78,8 @@ class ParseServer {
 
     const interfaces = JSON.parse(JSON.stringify(OptionsDefinitions));
 
-    function getValidObject(root) {
-      const result = {};
+    function getValidObject(root: Record<string, any>): Record<string, any> {
+      const result: Record<string, any> = {};
       for (const key in root) {
         if (Object.prototype.hasOwnProperty.call(root[key], 'type')) {
           if (root[key].type.endsWith('[]')) {
@@ -81,7 +96,7 @@ class ParseServer {
 
     const optionsBlueprint = getValidObject(interfaces['ParseServerOptions']);
 
-    function validateKeyNames(original, ref, name = '') {
+    function validateKeyNames(original: ParseServerOptions, ref: ParseServerOptions  = undefined, name = '') {
       let result = [];
       const prefix = name + (name !== '' ? '.' : '');
       for (const key in original) {
@@ -106,7 +121,7 @@ class ParseServer {
       return result;
     }
 
-    const diff = validateKeyNames(options, optionsBlueprint);
+    const diff = validateKeyNames(options, optionsBlueprint as any);
     if (diff.length > 0) {
       const logger = logging.logger;
       logger.error(`Invalid Option Keys Found: ${diff.join(', ')}`);
@@ -126,6 +141,7 @@ class ParseServer {
     Config.validateOptions(options);
     const allControllers = controllers.getControllers(options);
 
+    // @ts-ignore
     options.state = 'initialized';
     this.config = Config.put(Object.assign({}, options, allControllers));
     this.config.masterKeyIpsStore = new Map();
@@ -144,6 +160,7 @@ class ParseServer {
       }
       this.config.state = 'starting';
       Config.put(this.config);
+
       const {
         databaseController,
         hooksController,
@@ -175,7 +192,7 @@ class ParseServer {
       await Promise.all(startupPromises);
       if (cloud) {
         addParseCloud();
-        if (typeof cloud === 'function') {
+        if (_.isFunction(cloud)) {
           await Promise.resolve(cloud(Parse));
         } else if (typeof cloud === 'string') {
           let json;
@@ -243,7 +260,7 @@ class ParseServer {
    * @static
    * Create an express app for the parse server
    * @param {Object} options let you specify the maxUploadSize when creating the express app  */
-  static app(options) {
+  static app(options: ParseServerOptions) {
     const { maxUploadSize = '20mb', appId, directAccess, pages, rateLimit = [] } = options;
     // This app serves the Parse API directly.
     // It's the equivalent of https://api.parse.com/1 in the hosted Parse API.
@@ -258,8 +275,10 @@ class ParseServer {
       })
     );
 
-    api.use('/health', function (req, res) {
+    api.use('/health', function (req: Request, res: Response) {
+      // @ts-ignore
       res.status(options.state === 'ok' ? 200 : 503);
+      // @ts-ignore
       if (options.state === 'starting') {
         res.set('Retry-After', 1);
       }

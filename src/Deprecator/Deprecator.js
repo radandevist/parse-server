@@ -116,3 +116,5 @@ class Deprecator {
 }
 
 module.exports = Deprecator;
+
+export default Deprecator;

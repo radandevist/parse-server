@@ -1,17 +1,17 @@
 import ParseServer from './ParseServer';
 import FileSystemAdapter from '@parse/fs-files-adapter';
-import InMemoryCacheAdapter from './Adapters/Cache/InMemoryCacheAdapter';
-import NullCacheAdapter from './Adapters/Cache/NullCacheAdapter';
-import RedisCacheAdapter from './Adapters/Cache/RedisCacheAdapter';
+import InMemoryCacheAdapter from './Adapters/Cache/InMemoryCacheAdapter.js';
+import NullCacheAdapter from './Adapters/Cache/NullCacheAdapter.js';
+import RedisCacheAdapter from './Adapters/Cache/RedisCacheAdapter.js';
 import LRUCacheAdapter from './Adapters/Cache/LRUCache.js';
-import * as TestUtils from './TestUtils';
-import * as SchemaMigrations from './SchemaMigrations/Migrations';
-import AuthAdapter from './Adapters/Auth/AuthAdapter';
-import { useExternal } from './deprecated';
-import { getLogger } from './logger';
-import { PushWorker } from './Push/PushWorker';
-import { ParseServerOptions } from './Options';
-import { ParseGraphQLServer } from './GraphQL/ParseGraphQLServer';
+import * as TestUtils from './TestUtils.js';
+import * as SchemaMigrations from './SchemaMigrations/Migrations.js';
+import AuthAdapter from './Adapters/Auth/AuthAdapter.js';
+import { useExternal } from './deprecated.js';
+import { getLogger } from './logger.js';
+import { PushWorker } from './Push/PushWorker.js';
+import { ParseServerOptions } from './Options/index.js';
+import { ParseGraphQLServer } from './GraphQL/ParseGraphQLServer.js';
 
 // Factory function
 const _ParseServer = function (options: ParseServerOptions) {

@@ -204,3 +204,5 @@ class CheckRunner {
 }
 
 module.exports = CheckRunner;
+
+export default CheckRunner;
