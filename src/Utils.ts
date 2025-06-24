@@ -8,6 +8,54 @@ const path = require('path');
 const fs = require('fs').promises;
 
 /**
+ * Interface for localized path result
+ */
+interface LocalizedPathResult {
+  path: string;
+  subdir?: string;
+}
+
+/**
+ * Interface for relative time result
+ */
+interface RelativeTimeResult {
+  status: 'success' | 'error';
+  info: string;
+  result?: Date;
+}
+
+/**
+ * Interface for parameter validation type definition
+ */
+interface ParameterType {
+  t: string;
+  v: (param: any) => boolean;
+  o?: boolean;
+}
+
+/**
+ * Interface for parameter validation types object
+ */
+interface ParameterTypes {
+  [key: string]: ParameterType;
+}
+
+/**
+ * Interface for keyword denylist item
+ */
+interface KeywordDenylistItem {
+  key: string;
+  value: any;
+}
+
+/**
+ * Interface for config with keyword denylist
+ */
+interface ConfigWithKeywordDenylist {
+  requestKeywordDenylist?: KeywordDenylistItem[];
+}
+
+/**
  * The general purpose utilities.
  */
 class Utils {
@@ -39,7 +87,7 @@ class Utils {
    * - `subdir`: The subdirectory of the localized file, or undefined if
    *   there is no matching localized file.
    */
-  static async getLocalizedPath(defaultPath, locale) {
+  static async getLocalizedPath(defaultPath: string, locale: string): Promise<LocalizedPathResult> {
     // Get file name and paths
     const file = path.basename(defaultPath);
     const basePath = path.dirname(defaultPath);
@@ -78,7 +126,7 @@ class Utils {
    * @param {String} path The file path.
    * @returns {Promise<Boolean>} Is true if the file can be accessed, false otherwise.
    */
-  static async fileExists(path) {
+  static async fileExists(path: string): Promise<boolean> {
     try {
       await fs.access(path);
       return true;
@@ -93,7 +141,7 @@ class Utils {
    * @param {String} s The string to evaluate.
    * @returns {Boolean} Returns true if the evaluated string is a path.
    */
-  static isPath(s) {
+  static isPath(s: string): boolean {
     return /(^\/)|(^\.\/)|(^\.\.\/)/.test(s);
   }
 
@@ -104,7 +152,7 @@ class Utils {
    * @param {Object} result
    * @returns {Object} The flattened object.
    **/
-  static flattenObject(obj, parentKey, delimiter = '.', result = {}) {
+  static flattenObject(obj: Record<string, any>, parentKey?: string, delimiter = '.', result: Record<string, any> = {}): Record<string, any> {
     for (const key in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
         const newKey = parentKey ? parentKey + delimiter + key : key;
@@ -124,7 +172,7 @@ class Utils {
    * @param {any} object The object to validate.
    * @returns {Boolean} Returns true if the object is a promise.
    */
-  static isPromise(object) {
+  static isPromise(object: any): boolean {
     return object instanceof Promise;
   }
 
@@ -152,7 +200,7 @@ class Utils {
    * @param {Object} [current={}] The current result entry being composed.
    * @param {Array} [results=[]] The resulting array of permutations.
    */
-  static getObjectKeyPermutations(object, index = 0, current = {}, results = []) {
+  static getObjectKeyPermutations(object: Record<string, any[]>, index = 0, current: Record<string, any> = {}, results: Record<string, any>[] = []): Record<string, any>[] {
     const keys = Object.keys(object);
     const key = keys[index];
     const values = object[key];
@@ -190,7 +238,7 @@ class Utils {
    * @param {Object} types.v The function to validate the parameter value.
    * @param {Boolean} [types.o=false] Is true if the parameter is optional.
    */
-  static validateParams(params, types) {
+  static validateParams(params: Record<string, any>, types: ParameterTypes): void {
     for (const key of Object.keys(params)) {
       const type = types[key];
       const isOptional = !!type.o;
@@ -207,7 +255,7 @@ class Utils {
    * @param {Date} now The date the string is comparing against.
    * @returns {Object} The relative date object.
    **/
-  static relativeTimeToDate(text, now = new Date()) {
+  static relativeTimeToDate(text: string, now = new Date()): RelativeTimeResult {
     text = text.toLowerCase();
     let parts = text.split(' ');
 
@@ -246,9 +294,9 @@ class Utils {
       };
     }
 
-    const pairs = [];
+    const pairs: [string, string][] = [];
     while (parts.length) {
-      pairs.push([parts.shift(), parts.shift()]);
+      pairs.push([parts.shift()!, parts.shift()!]);
     }
 
     let seconds = 0;
@@ -340,10 +388,10 @@ class Utils {
    * @param {any | undefined} value The value to match, or undefined if only the key should be matched.
    * @returns {Boolean} True if a match was found, false otherwise.
    */
-  static objectContainsKeyValue(obj, key, value) {
-    const isMatch = (a, b) => (typeof a === 'string' && new RegExp(b).test(a)) || a === b;
-    const isKeyMatch = k => isMatch(k, key);
-    const isValueMatch = v => isMatch(v, value);
+  static objectContainsKeyValue(obj: Record<string, any>, key?: string, value?: any): boolean {
+    const isMatch = (a: any, b: any): boolean => (typeof a === 'string' && new RegExp(b).test(a)) || a === b;
+    const isKeyMatch = (k: string): boolean => isMatch(k, key);
+    const isValueMatch = (v: any): boolean => isMatch(v, value);
     for (const [k, v] of Object.entries(obj)) {
       if (key !== undefined && value === undefined && isKeyMatch(k)) {
         return true;
@@ -359,7 +407,7 @@ class Utils {
     return false;
   }
 
-  static checkProhibitedKeywords(config, data) {
+  static checkProhibitedKeywords(config: ConfigWithKeywordDenylist | undefined, data: Record<string, any>): void {
     if (config?.requestKeywordDenylist) {
       // Scan request data for denied keywords
       for (const keyword of config.requestKeywordDenylist) {
@@ -390,7 +438,7 @@ class Utils {
    * console.log(obj);
    * // Output: { a: 1, e: 4, c: 2, d: 3 }
   */
-  static addNestedKeysToRoot(obj, key) {
+  static addNestedKeysToRoot(obj: Record<string, any>, key: string): Record<string, any> {
     if (obj[key] && typeof obj[key] === 'object') {
       // Add nested keys to root
       Object.assign(obj, { ...obj[key] });
@@ -405,7 +453,7 @@ class Utils {
    * @param {String} input The string to encode.
    * @returns {String} The encoded string.
    */
-  static encodeForUrl(input) {
+  static encodeForUrl(input: string): string {
     return encodeURIComponent(input).replace(/[!'.()*]/g, char =>
       '%' + char.charCodeAt(0).toString(16).toUpperCase()
     );

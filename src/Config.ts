@@ -3,7 +3,7 @@
 // mount is the URL for the root of the API; includes http, domain, etc.
 
 import { isBoolean, isString } from 'lodash';
-import net from 'net';
+import * as net from 'net';
 import AppCache from './cache';
 import DatabaseController from './Controllers/DatabaseController';
 import { logLevels as validLogLevels } from './Controllers/LoggerController';
@@ -33,7 +33,26 @@ function removeTrailingSlash(str) {
 }
 
 export class Config {
-  static get(applicationId: string, mount: string) {
+  applicationId: string;
+  database: DatabaseController;
+  version: string;
+  _mount: string;
+  publicServerURL: string;
+  
+  // Add missing property declarations
+  verifyUserEmails?: boolean;
+  emailVerifyTokenValidityDuration?: number;
+  passwordPolicy?: any;
+  expireInactiveSessions?: boolean;
+  sessionLength?: number;
+  rateLimits?: any[];
+  customPages?: any;
+  masterKey?: string | (() => Promise<string>);
+  masterKeyTtl?: number;
+  masterKeyCache?: { masterKey: string; expiresAt: Date | null };
+  pages?: any;
+
+  static get(applicationId: string, mount?: string) {
     const cacheInfo = AppCache.get(applicationId);
     if (!cacheInfo) {
       return;
