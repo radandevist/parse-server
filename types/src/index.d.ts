@@ -7,6 +7,7 @@ import LRUCacheAdapter from './Adapters/Cache/LRUCache.js';
 import * as TestUtils from './TestUtils';
 import * as SchemaMigrations from './SchemaMigrations/Migrations';
 import AuthAdapter from './Adapters/Auth/AuthAdapter';
+import logger from './logger';
 import { PushWorker } from './Push/PushWorker';
 import { ParseServerOptions } from './Options';
 import { ParseGraphQLServer } from './GraphQL/ParseGraphQLServer';
@@ -18,4 +19,4 @@ declare const _ParseServer: {
 declare const S3Adapter: any;
 declare const GCSAdapter: any;
 export default ParseServer;
-export { S3Adapter, GCSAdapter, FileSystemAdapter, InMemoryCacheAdapter, NullCacheAdapter, RedisCacheAdapter, LRUCacheAdapter, TestUtils, PushWorker, ParseGraphQLServer, _ParseServer as ParseServer, SchemaMigrations, AuthAdapter, };
+export { S3Adapter, GCSAdapter, FileSystemAdapter, InMemoryCacheAdapter, NullCacheAdapter, RedisCacheAdapter, LRUCacheAdapter, TestUtils, PushWorker, ParseGraphQLServer, _ParseServer as ParseServer, SchemaMigrations, AuthAdapter, logger, };
