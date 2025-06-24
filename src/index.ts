@@ -8,7 +8,7 @@ import * as TestUtils from './TestUtils';
 import * as SchemaMigrations from './SchemaMigrations/Migrations';
 import AuthAdapter from './Adapters/Auth/AuthAdapter';
 import { useExternal } from './deprecated';
-import { getLogger } from './logger';
+import logger from './logger';
 import { PushWorker } from './Push/PushWorker';
 import { ParseServerOptions } from './Options';
 import { ParseGraphQLServer } from './GraphQL/ParseGraphQLServer';
@@ -25,9 +25,9 @@ _ParseServer.startApp = ParseServer.startApp;
 const S3Adapter = useExternal('S3Adapter', '@parse/s3-files-adapter');
 const GCSAdapter = useExternal('GCSAdapter', '@parse/gcs-files-adapter');
 
-Object.defineProperty(module.exports, 'logger', {
-  get: getLogger,
-});
+// Object.defineProperty(module.exports, 'logger', {
+//   get: getLogger,
+// });
 
 export default ParseServer;
 export {
@@ -44,4 +44,5 @@ export {
   _ParseServer as ParseServer,
   SchemaMigrations,
   AuthAdapter,
+  logger,
 };

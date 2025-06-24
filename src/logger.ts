@@ -18,7 +18,12 @@ function defaultLogger() {
 let logger = defaultLogger();
 
 export function setLogger(aLogger) {
-  logger = aLogger;
+  // logger = aLogger;
+  // If you want to allow changing the logger at runtime, update both the local and exported value
+  if (typeof exports !== 'undefined') {
+    (exports as any).logger = aLogger;
+    (exports as any).default = aLogger;
+  }
 }
 
 export function getLogger() {
@@ -26,13 +31,13 @@ export function getLogger() {
 }
 
 // for: `import logger from './logger'`
-Object.defineProperty(module.exports, 'default', {
-  get: getLogger,
-});
-// export default logger;
+// Object.defineProperty(module.exports, 'default', {
+//   get: getLogger,
+// });
 
 // for: `import { logger } from './logger'`
-Object.defineProperty(module.exports, 'logger', {
-  get: getLogger,
-});
-// export { logger };
+// Object.defineProperty(module.exports, 'logger', {
+//   get: getLogger,
+// });
+export default logger;
+export { logger };

@@ -36,7 +36,7 @@ describe('Deprecator', () => {
   });
 
   it('logs runtime deprecation', async () => {
-    const logger = require('../lib/logger').logger;
+    const logger = require('../lib/logger').default;
     const logSpy = spyOn(logger, 'warn').and.callFake(() => {});
     const options = { usage: 'Doing this', solution: 'Do that instead.' };
 

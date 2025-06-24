@@ -6,7 +6,6 @@ import { Parse } from 'parse/node';
 import _ from 'lodash';
 import intersect from 'intersect';
 import deepcopy from 'deepcopy';
-// @ts-expect-error
 import logger from '../logger';
 import Utils from '../Utils';
 import * as SchemaController from './SchemaController';
@@ -17,9 +16,6 @@ import SchemaCache from '../Adapters/Cache/SchemaCache';
 import type { LoadSchemaOptions } from './types';
 import type { ParseServerOptions } from '../Options';
 import type { QueryOptions, FullQueryOptions } from '../Adapters/Storage/StorageAdapter';
-
-// const Utils = _.get(utils, 'default');
-// const logger = _.get(log, 'default');
 
 interface ACLObject {
   [key: string]: {
