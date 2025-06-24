@@ -142,7 +142,8 @@
     "prettier": "prettier --write {src,spec}/{**/*,*}.js",
     "prepare": "npm run build",
     "postinstall": "node -p 'require(\"./postinstall.js\")()'",
-    "madge:circular": "node_modules/.bin/madge ./src --circular"
+    "madge:circular": "node_modules/.bin/madge ./src --circular",
+    "kill": "cross-env mongodb-runner stop --all; lsof -ti:27017 | xargs -r kill"
   },
   "types": "types/index.d.ts",
   "engines": {
