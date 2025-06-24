@@ -6,6 +6,7 @@ import { Parse } from 'parse/node';
 import _ from 'lodash';
 import intersect from 'intersect';
 import deepcopy from 'deepcopy';
+// @ts-expect-error
 import logger from '../logger';
 import Utils from '../Utils';
 import * as SchemaController from './SchemaController';
