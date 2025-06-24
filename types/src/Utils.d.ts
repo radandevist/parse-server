@@ -3,8 +3,6 @@
  * @file General purpose utilities
  * @description General purpose utilities.
  */
-declare const path: any;
-declare const fs: any;
 /**
  * Interface for localized path result
  */
@@ -196,3 +194,4 @@ declare class Utils {
      */
     static encodeForUrl(input: string): string;
 }
+export default Utils;

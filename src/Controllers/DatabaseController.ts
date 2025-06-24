@@ -161,7 +161,8 @@ const filterSensitiveData = (
   schema: SchemaController.SchemaController | any,
   className: string,
   protectedFields: string[] | null,
-  object: { [key: string]: any; objectId?: string; password?: string; _hashed_password?: string; sessionToken?: string; authData?: any }
+  object: { [key: string]: any; objectId?: string; password?: string; _hashed_password?: string; sessionToken?: string; authData?: any },
+  _query: any,
 ): { [key: string]: any } => {
   let userId: string | null = null;
   if (auth && auth.user) { userId = auth.user.id; }
@@ -1380,7 +1381,8 @@ class DatabaseController {
                         schemaController,
                         className,
                         protectedFields,
-                        object
+                        object,
+                        undefined,
                       );
                     })
                   )
@@ -1902,7 +1904,8 @@ class DatabaseController {
 DatabaseController._validateQuery = validateQuery;
 DatabaseController.filterSensitiveData = filterSensitiveData;
 
-module.exports = DatabaseController;
-// Expose validateQuery for tests
-module.exports._validateQuery = validateQuery;
-module.exports.filterSensitiveData = filterSensitiveData;
+// module.exports = DatabaseController;
+// // Expose validateQuery for tests
+// module.exports._validateQuery = validateQuery;
+// module.exports.filterSensitiveData = filterSensitiveData;
+export default DatabaseController;

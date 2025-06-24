@@ -26,11 +26,13 @@ export function getLogger() {
 }
 
 // for: `import logger from './logger'`
-Object.defineProperty(module.exports, 'default', {
-  get: getLogger,
-});
+// Object.defineProperty(module.exports, 'default', {
+//   get: getLogger,
+// });
+export default logger;
 
 // for: `import { logger } from './logger'`
-Object.defineProperty(module.exports, 'logger', {
-  get: getLogger,
-});
+// Object.defineProperty(module.exports, 'logger', {
+//   get: getLogger,
+// });
+export { logger };
