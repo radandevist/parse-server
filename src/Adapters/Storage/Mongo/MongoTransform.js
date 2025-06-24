@@ -2,7 +2,8 @@ import log from '../../../logger';
 import _ from 'lodash';
 var mongodb = require('mongodb');
 var Parse = require('parse/node').Parse;
-const Utils = require('../../../Utils');
+// const Utils = require('../../../Utils');
+import Utils from '../../../Utils';
 
 const transformKey = (className, fieldName, schema) => {
   // Check if the schema is known since it's a built-in field.

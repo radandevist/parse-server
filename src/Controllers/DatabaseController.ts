@@ -2,13 +2,9 @@
 // A database adapter that works with data exported from the hosted
 // Parse database.
 
-// @flow-disable-next
 import { Parse } from 'parse/node';
-// @flow-disable-next
 import _ from 'lodash';
-// @flow-disable-next
 import intersect from 'intersect';
-// @flow-disable-next
 import deepcopy from 'deepcopy';
 import logger from '../logger';
 import Utils from '../Utils';
@@ -21,14 +17,40 @@ import type { LoadSchemaOptions } from './types';
 import type { ParseServerOptions } from '../Options';
 import type { QueryOptions, FullQueryOptions } from '../Adapters/Storage/StorageAdapter';
 
-function addWriteACL(query, acl) {
+// const Utils = _.get(utils, 'default');
+// const logger = _.get(log, 'default');
+
+interface ACLObject {
+  [key: string]: {
+    read?: boolean;
+    write?: boolean;
+  };
+}
+
+interface QueryObject {
+  [key: string]: any;
+  ACL?: ACLObject;
+  $or?: QueryObject[];
+  $and?: QueryObject[];
+  $nor?: QueryObject[];
+  _rperm?: string[];
+  _wperm?: string[];
+}
+
+interface TransformedObject {
+  [key: string]: any;
+  _rperm?: string[];
+  _wperm?: string[];
+}
+
+function addWriteACL(query: QueryObject, acl: string[]): QueryObject {
   const newQuery = _.cloneDeep(query);
   //Can't be any existing '_wperm' query, we don't allow client queries on that, no need to $and
   newQuery._wperm = { $in: [null, ...acl] };
   return newQuery;
 }
 
-function addReadACL(query, acl) {
+function addReadACL(query: QueryObject, acl: string[]): QueryObject {
   const newQuery = _.cloneDeep(query);
   //Can't be any existing '_rperm' query, we don't allow client queries on that, no need to $and
   newQuery._rperm = { $in: [null, '*', ...acl] };
@@ -36,7 +58,7 @@ function addReadACL(query, acl) {
 }
 
 // Transforms a REST API formatted ACL object to our two-field mongo format.
-const transformObjectACL = ({ ACL, ...result }) => {
+const transformObjectACL = ({ ACL, ...result }: { ACL?: ACLObject; [key: string]: any }): TransformedObject => {
   if (!ACL) {
     return result;
   }
@@ -133,15 +155,15 @@ const validateQuery = (
 const filterSensitiveData = (
   isMaster: boolean,
   isMaintenance: boolean,
-  aclGroup: any[],
-  auth: any,
-  operation: any,
+  aclGroup: string[],
+  auth: { user?: { id: string } },
+  operation: string,
   schema: SchemaController.SchemaController | any,
   className: string,
-  protectedFields: null | Array<any>,
-  object: any
-) => {
-  let userId = null;
+  protectedFields: string[] | null,
+  object: { [key: string]: any; objectId?: string; password?: string; _hashed_password?: string; sessionToken?: string; authData?: any }
+): { [key: string]: any } => {
+  let userId: string | null = null;
   if (auth && auth.user) { userId = auth.user.id; }
 
   // replace protectedFields when using pointer-permissions
@@ -158,7 +180,7 @@ const filterSensitiveData = (
           return { key: key.substring(10), value: perms.protectedFields[key] };
         });
 
-      const newProtectedFields: Array<string>[] = [];
+      const newProtectedFields: string[][] = [];
       let overrideProtectedFields = false;
 
       // check if the object grants the current user access based on the extracted fields
@@ -168,7 +190,7 @@ const filterSensitiveData = (
         if (readUserFieldValue) {
           if (Array.isArray(readUserFieldValue)) {
             pointerPermIncludesUser = readUserFieldValue.some(
-              user => user.objectId && user.objectId === userId
+              (user: { objectId?: string }) => user.objectId && user.objectId === userId
             );
           } else {
             pointerPermIncludesUser =
@@ -261,15 +283,15 @@ const specialKeysForUpdate = [
   '_password_history',
 ];
 
-const isSpecialUpdateKey = key => {
+const isSpecialUpdateKey = (key: string): boolean => {
   return specialKeysForUpdate.indexOf(key) >= 0;
 };
 
-function joinTableName(className, key) {
+function joinTableName(className: string, key: string): string {
   return `_Join:${key}:${className}`;
 }
 
-const flattenUpdateOperatorsForCreate = object => {
+const flattenUpdateOperatorsForCreate = (object: { [key: string]: any }): void => {
   for (const key in object) {
     if (object[key] && object[key].__op) {
       switch (object[key].__op) {
@@ -313,7 +335,7 @@ const flattenUpdateOperatorsForCreate = object => {
   }
 };
 
-const transformAuthData = (className, object, schema) => {
+const transformAuthData = (className: string, object: { [key: string]: any; authData?: any }, schema: { fields: { [key: string]: any } }): void => {
   if (object.authData && className === '_User') {
     Object.keys(object.authData).forEach(provider => {
       const providerData = object.authData[provider];
@@ -331,7 +353,7 @@ const transformAuthData = (className, object, schema) => {
   }
 };
 // Transforms a Database format ACL to a REST API format ACL
-const untransformObjectACL = ({ _rperm, _wperm, ...output }) => {
+const untransformObjectACL = ({ _rperm, _wperm, ...output }: { _rperm?: string[]; _wperm?: string[]; [key: string]: any }): { [key: string]: any; ACL?: ACLObject } => {
   if (_rperm || _wperm) {
     output.ACL = {};
 
@@ -368,7 +390,7 @@ const relationSchema = {
   fields: { relatedId: { type: 'String' }, owningId: { type: 'String' } },
 };
 
-const convertEmailToLowercase = (object, className, options) => {
+const convertEmailToLowercase = (object: { [key: string]: any }, className: string, options: { convertEmailToLowercase?: boolean }): void => {
   if (className === '_User' && options.convertEmailToLowercase) {
     if (typeof object['email'] === 'string') {
       object['email'] = object['email'].toLowerCase();
@@ -376,7 +398,7 @@ const convertEmailToLowercase = (object, className, options) => {
   }
 };
 
-const convertUsernameToLowercase = (object, className, options) => {
+const convertUsernameToLowercase = (object: { [key: string]: any }, className: string, options: { convertUsernameToLowercase?: boolean }): void => {
   if (className === '_User' && options.convertUsernameToLowercase) {
     if (typeof object['username'] === 'string') {
       object['username'] = object['username'].toLowerCase();
@@ -384,11 +406,20 @@ const convertUsernameToLowercase = (object, className, options) => {
   }
 };
 
+interface RelationUpdate {
+  key: string;
+  op: {
+    __op: string;
+    objects?: Array<{ objectId: string }>;
+    ops?: any[];
+  };
+}
+
 class DatabaseController {
   adapter: StorageAdapter;
   schemaCache: any;
-  schemaPromise: ?Promise<SchemaController.SchemaController>;
-  _transactionalSession: ?any;
+  schemaPromise?: Promise<SchemaController.SchemaController>;
+  _transactionalSession?: any;
   options: ParseServerOptions;
   idempotencyOptions: any;
 
@@ -447,7 +478,7 @@ class DatabaseController {
   // Returns a promise for the classname that is related to the given
   // classname through the key.
   // TODO: make this not in the DatabaseController interface
-  redirectClassNameForKey(className: string, key: string): Promise<?string> {
+  redirectClassNameForKey(className: string, key: string): Promise<string | undefined> {
     return this.loadSchema().then(schema => {
       var t = schema.getExpectedType(className, key);
       if (t != null && typeof t !== 'string' && t.type === 'Relation') {
@@ -655,12 +686,12 @@ class DatabaseController {
   // Collect all relation-updating operations from a REST-format update.
   // Returns a list of all relation updates to perform
   // This mutates update.
-  collectRelationUpdates(className: string, objectId: ?string, update: any) {
-    var ops = [];
-    var deleteMe = [];
+  collectRelationUpdates(className: string, objectId: string | undefined, update: { [key: string]: any; objectId?: string }): RelationUpdate[] {
+    const ops: RelationUpdate[] = [];
+    const deleteMe: string[] = [];
     objectId = update.objectId || objectId;
 
-    var process = (op, key) => {
+    const process = (op: any, key: string): void => {
       if (!op) {
         return;
       }
@@ -675,7 +706,7 @@ class DatabaseController {
       }
 
       if (op.__op == 'Batch') {
-        for (var x of op.ops) {
+        for (const x of op.ops) {
           process(x, key);
         }
       }
@@ -692,32 +723,32 @@ class DatabaseController {
 
   // Processes relation-updating operations from a REST-format update.
   // Returns a promise that resolves when all updates have been performed
-  handleRelationUpdates(className: string, objectId: string, update: any, ops: any) {
-    var pending = [];
+  handleRelationUpdates(className: string, objectId: string, update: { [key: string]: any; objectId?: string }, ops: RelationUpdate[]): Promise<void> {
+    const pending: Promise<any>[] = [];
     objectId = update.objectId || objectId;
     ops.forEach(({ key, op }) => {
       if (!op) {
         return;
       }
       if (op.__op == 'AddRelation') {
-        for (const object of op.objects) {
+        for (const object of op.objects || []) {
           pending.push(this.addRelation(key, className, objectId, object.objectId));
         }
       }
 
       if (op.__op == 'RemoveRelation') {
-        for (const object of op.objects) {
+        for (const object of op.objects || []) {
           pending.push(this.removeRelation(key, className, objectId, object.objectId));
         }
       }
     });
 
-    return Promise.all(pending);
+    return Promise.all(pending).then(() => {});
   }
 
   // Adds a relation.
   // Returns a promise that resolves successfully iff the add was successful.
-  addRelation(key: string, fromClassName: string, fromId: string, toId: string) {
+  addRelation(key: string, fromClassName: string, fromId: string, toId: string): Promise<any> {
     const doc = {
       relatedId: toId,
       owningId: fromId,
@@ -734,8 +765,8 @@ class DatabaseController {
   // Removes a relation.
   // Returns a promise that resolves successfully iff the remove was
   // successful.
-  removeRelation(key: string, fromClassName: string, fromId: string, toId: string) {
-    var doc = {
+  removeRelation(key: string, fromClassName: string, fromId: string, toId: string): Promise<void> {
+    const doc = {
       relatedId: toId,
       owningId: fromId,
     };
@@ -939,7 +970,7 @@ class DatabaseController {
     queryOptions: QueryOptions
   ): Promise<Array<string>> {
     const { skip, limit, sort } = queryOptions;
-    const findOptions = {};
+    const findOptions: any = {};
     if (sort && sort.createdAt && this.adapter.canSortOnJoinTables) {
       findOptions.sort = { _id: sort.createdAt };
       findOptions.limit = limit;
@@ -1000,7 +1031,7 @@ class DatabaseController {
       if (!t || t.type !== 'Relation') {
         return Promise.resolve(query);
       }
-      let queries: ?(any[]) = null;
+      let queries: (any[] | null | undefined) = null;
       if (
         query[key] &&
         (query[key]['$in'] ||
@@ -1064,20 +1095,20 @@ class DatabaseController {
 
   // Modifies query so that it no longer has $relatedTo
   // Returns a promise that resolves when query is mutated
-  reduceRelationKeys(className: string, query: any, queryOptions: any): ?Promise<void> {
+  reduceRelationKeys(className: string, query: any, queryOptions: any): Promise<void> | void {
     if (query['$or']) {
       return Promise.all(
         query['$or'].map(aQuery => {
           return this.reduceRelationKeys(className, aQuery, queryOptions);
         })
-      );
+      ).then(() => {});
     }
     if (query['$and']) {
       return Promise.all(
         query['$and'].map(aQuery => {
           return this.reduceRelationKeys(className, aQuery, queryOptions);
         })
-      );
+      ).then(() => {});
     }
     var relatedTo = query['$relatedTo'];
     if (relatedTo) {
@@ -1096,12 +1127,12 @@ class DatabaseController {
     }
   }
 
-  addInObjectIdsIds(ids: ?Array<string> = null, query: any) {
-    const idsFromString: ?Array<string> =
+  addInObjectIdsIds(ids: string[] | null = null, query: any) {
+    const idsFromString: string[] | null =
       typeof query.objectId === 'string' ? [query.objectId] : null;
-    const idsFromEq: ?Array<string> =
+    const idsFromEq: string[] | null =
       query.objectId && query.objectId['$eq'] ? [query.objectId['$eq']] : null;
-    const idsFromIn: ?Array<string> =
+    const idsFromIn: string[] | null =
       query.objectId && query.objectId['$in'] ? query.objectId['$in'] : null;
 
     // @flow-disable-next
@@ -1411,12 +1442,12 @@ class DatabaseController {
   // This helps to create intermediate objects for simpler comparison of
   // key value pairs used in query objects. Each key value pair will represented
   // in a similar way to json
-  objectToEntriesStrings(query: any): Array<string> {
+  objectToEntriesStrings(query: { [key: string]: any }): string[] {
     return Object.entries(query).map(a => a.map(s => JSON.stringify(s)).join(':'));
   }
 
   // Naive logic reducer for OR operations meant to be used only for pointer permissions.
-  reduceOrOperation(query: { $or: Array<any> }): any {
+  reduceOrOperation(query: { $or: any[] }): { [key: string]: any } {
     if (!query.$or) {
       return query;
     }
@@ -1451,7 +1482,7 @@ class DatabaseController {
   }
 
   // Naive logic reducer for AND operations meant to be used only for pointer permissions.
-  reduceAndOperation(query: { $and: Array<any> }): any {
+  reduceAndOperation(query: { $and: any[] }): { [key: string]: any } {
     if (!query.$and) {
       return query;
     }
@@ -1779,7 +1810,7 @@ class DatabaseController {
     const isMongoAdapter = this.adapter instanceof MongoStorageAdapter;
     const isPostgresAdapter = this.adapter instanceof PostgresStorageAdapter;
     if (isMongoAdapter || isPostgresAdapter) {
-      let options = {};
+      let options: any = {};
       if (isMongoAdapter) {
         options = {
           ttl: 0,
@@ -1864,9 +1895,12 @@ class DatabaseController {
     return Promise.resolve(response);
   }
 
-  static _validateQuery: (any, boolean, boolean, boolean) => void;
-  static filterSensitiveData: (boolean, boolean, any[], any, any, any, string, any[], any) => void;
+  static _validateQuery: typeof validateQuery;
+  static filterSensitiveData: typeof filterSensitiveData;
 }
+
+DatabaseController._validateQuery = validateQuery;
+DatabaseController.filterSensitiveData = filterSensitiveData;
 
 module.exports = DatabaseController;
 // Expose validateQuery for tests

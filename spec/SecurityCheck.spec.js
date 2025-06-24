@@ -1,6 +1,6 @@
 'use strict';
 
-const Utils = require('../lib/Utils');
+const Utils = require('../lib/Utils').default;
 const Config = require('../lib/Config');
 const request = require('../lib/request');
 const Definitions = require('../lib/Options/Definitions');

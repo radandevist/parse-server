@@ -5,7 +5,8 @@ import Config from '../Config';
 import logger from '../logger';
 const triggers = require('../triggers');
 const http = require('http');
-const Utils = require('../Utils');
+// const Utils = require('../Utils');
+import Utils from '../Utils';
 
 const downloadFileFromURI = uri => {
   return new Promise((res, rej) => {

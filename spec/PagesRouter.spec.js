@@ -3,7 +3,7 @@
 const request = require('../lib/request');
 const fs = require('fs').promises;
 const mustache = require('mustache');
-const Utils = require('../lib/Utils');
+const Utils = require('../lib/Utils').default;
 const { Page } = require('../lib/Page');
 const Config = require('../lib/Config');
 const Definitions = require('../lib/Options/Definitions');

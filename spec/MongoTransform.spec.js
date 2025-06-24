@@ -4,7 +4,7 @@
 const transform = require('../lib/Adapters/Storage/Mongo/MongoTransform');
 const dd = require('deep-diff');
 const mongodb = require('mongodb');
-const Utils = require('../lib/Utils');
+const Utils = require('../lib/Utils').default;
 
 describe('parseObjectToMongoObjectForCreate', () => {
   it('a basic number', done => {

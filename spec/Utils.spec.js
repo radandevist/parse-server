@@ -1,4 +1,4 @@
-const Utils = require('../lib/Utils');
+const Utils = require('../lib/Utils').default;
 
 describe('Utils', () => {
   describe('encodeForUrl', () => {

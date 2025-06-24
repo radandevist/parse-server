@@ -6,7 +6,8 @@ var SchemaController = require('./Controllers/SchemaController');
 var deepcopy = require('deepcopy');
 
 const Auth = require('./Auth');
-const Utils = require('./Utils');
+// const Utils = require('./Utils');
+import Utils from './Utils';
 var cryptoUtils = require('./cryptoUtils');
 var passwordCrypto = require('./password');
 var Parse = require('parse/node');
