@@ -32,12 +32,29 @@ These are the foundation files that everything else depends on. Convert these fi
   - **Dependencies**: Used by all controllers and routers
   - **Impact**: Converting this will provide type safety for the entire data layer
 
-- [ ] **`src/Controllers/SchemaController.js`** (1,668 lines)
+LESSONS LEARNED:
+  - some test files still import the .js from src folder: change the import to the lib folder
+  - If a file has been compiled from a Typescript file, then we should update the imports in the test file to this:
+  ```
+  // TesFile.spec.js
+  // before 
+  const WhateverAdapterOrController = require('../lib/WhateverAdapterOrController.js')
+
+  // after
+  const WhateverAdapterOrController = require('../lib/WhateverAdapterOrController.js').default;
+  const namedExport = require('../lib/WhateverAdapterOrController.js').namedExport;
+ 
+  ```
+
+
+- [x] **`src/Controllers/SchemaController.js`** (1,668 lines)
   - **Why Critical**: Schema validation and management, fundamental to Parse Server
   - **Complexity**: Very high - schema validation, field type checking, permissions
   - **Dependencies**: Used by DatabaseController and all data operations
   - **Impact**: Critical for data integrity and type safety
 
+LESSONS LEARNED:
+  
 - [ ] **`src/Controllers/index.js`** (239 lines)
   - **Why Critical**: Factory for all controllers, central dependency injection
   - **Complexity**: Medium - controller initialization and configuration
@@ -471,14 +488,6 @@ These have the least impact on the core system.
   - **Why Lowest**: Vendor utilities
   - **Complexity**: Low - vendor implementations
   - **Dependencies**: Used by various components
-
-## Files Already Converted ✅
-
-- [x] **`src/index.ts`** (48 lines)
-- [x] **`src/logger.ts`** (37 lines)
-- [x] **`src/ParseServer.ts`** (654 lines)
-- [x] **`src/Config.ts`** (772 lines) - Previously Config.js
-- [x] **`src/Utils.ts`** (416 lines) - Previously Utils.js
 
 ## Migration Notes
 
