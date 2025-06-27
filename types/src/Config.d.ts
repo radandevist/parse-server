@@ -20,6 +20,8 @@ export declare class Config {
         expiresAt: Date | null;
     };
     pages?: any;
+    protectedFields?: any;
+    allowCustomObjectId?: boolean;
     static get(applicationId: string, mount?: string): Config;
     static put(serverConfiguration: any): any;
     static validateOptions({ customPages, publicServerURL, revokeSessionOnPasswordReset, expireInactiveSessions, sessionLength, defaultLimit, maxLimit, accountLockout, passwordPolicy, masterKeyIps, masterKey, maintenanceKey, maintenanceKeyIps, readOnlyMasterKey, allowHeaders, idempotencyOptions, fileUpload, pages, security, enforcePrivateUsers, enableInsecureAuthAdapters, schema, requestKeywordDenylist, allowExpiredAuthDataToken, logLevels, rateLimit, databaseOptions, extendSessionOnUse, allowClientClassCreation, }: {

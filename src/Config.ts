@@ -51,6 +51,8 @@ export class Config {
   masterKeyTtl?: number;
   masterKeyCache?: { masterKey: string; expiresAt: Date | null };
   pages?: any;
+  protectedFields?: any;
+  allowCustomObjectId?: boolean;
 
   static get(applicationId: string, mount?: string) {
     const cacheInfo = AppCache.get(applicationId);

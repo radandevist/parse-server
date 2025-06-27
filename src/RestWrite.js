@@ -2,7 +2,8 @@
 // that writes to the database.
 // This could be either a "create" or an "update".
 
-var SchemaController = require('./Controllers/SchemaController');
+// var SchemaController = require('./Controllers/SchemaController');
+import { systemClasses, requiredColumns } from './Controllers/SchemaController';
 var deepcopy = require('deepcopy');
 
 const Auth = require('./Auth');
@@ -17,7 +18,6 @@ const util = require('util');
 import RestQuery from './RestQuery';
 import _ from 'lodash';
 import logger from './logger';
-import { requiredColumns } from './Controllers/SchemaController';
 
 // query and data are both provided in REST API format. So data
 // types are encoded by plain old objects.
@@ -193,7 +193,7 @@ RestWrite.prototype.validateClientClassCreation = function () {
     this.config.allowClientClassCreation === false &&
     !this.auth.isMaster &&
     !this.auth.isMaintenance &&
-    SchemaController.systemClasses.indexOf(this.className) === -1
+    systemClasses.indexOf(this.className) === -1
   ) {
     return this.config.database
       .loadSchema()

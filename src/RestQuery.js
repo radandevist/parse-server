@@ -1,7 +1,8 @@
 // An object that encapsulates everything we need to run a 'find'
 // operation, encoded in the REST API format.
 
-var SchemaController = require('./Controllers/SchemaController');
+// var SchemaController = require('./Controllers/SchemaController');
+import { systemClasses } from './Controllers/SchemaController';
 var Parse = require('parse/node').Parse;
 const triggers = require('./triggers');
 const { continueWhile } = require('parse/lib/node/promiseUtils');
@@ -410,7 +411,7 @@ _UnsafeRestQuery.prototype.validateClientClassCreation = function () {
   if (
     this.config.allowClientClassCreation === false &&
     !this.auth.isMaster &&
-    SchemaController.systemClasses.indexOf(this.className) === -1
+    systemClasses.indexOf(this.className) === -1
   ) {
     return this.config.database
       .loadSchema()

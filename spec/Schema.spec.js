@@ -1,7 +1,7 @@
 'use strict';
 
 const Config = require('../lib/Config');
-const SchemaController = require('../lib/Controllers/SchemaController');
+const { buildMergedSchemaObject } = require('../lib/Controllers/SchemaController');
 const dd = require('deep-diff');
 
 let config;
@@ -1227,7 +1227,7 @@ describe('SchemaController', () => {
 
   it('can merge schemas', done => {
     expect(
-      SchemaController.buildMergedSchemaObject(
+      buildMergedSchemaObject(
         {
           _id: 'SomeClass',
           someType: { type: 'Number' },
@@ -1245,7 +1245,7 @@ describe('SchemaController', () => {
 
   it('can merge deletions', done => {
     expect(
-      SchemaController.buildMergedSchemaObject(
+      buildMergedSchemaObject(
         {
           _id: 'SomeClass',
           someType: { type: 'Number' },
@@ -1265,7 +1265,7 @@ describe('SchemaController', () => {
 
   it('ignore default field when merge with system class', done => {
     expect(
-      SchemaController.buildMergedSchemaObject(
+      buildMergedSchemaObject(
         {
           _id: '_User',
           username: { type: 'String' },

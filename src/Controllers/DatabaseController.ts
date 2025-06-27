@@ -8,7 +8,7 @@ import intersect from 'intersect';
 import deepcopy from 'deepcopy';
 import logger from '../logger';
 import Utils from '../Utils';
-import * as SchemaController from './SchemaController';
+import SchemaController, { VolatileClassesSchemas, classNameIsValid, convertSchemaToAdapterSchema, defaultColumns, fieldNameIsValid, load } from './SchemaController';
 import { StorageAdapter } from '../Adapters/Storage/StorageAdapter';
 import MongoStorageAdapter from '../Adapters/Storage/Mongo/MongoStorageAdapter';
 import PostgresStorageAdapter from '../Adapters/Storage/Postgres/PostgresStorageAdapter';
@@ -155,7 +155,7 @@ const filterSensitiveData = (
   aclGroup: string[],
   auth: { user?: { id: string } },
   operation: string,
-  schema: SchemaController.SchemaController | any,
+  schema: SchemaController | any,
   className: string,
   protectedFields: string[] | null,
   object: { [key: string]: any; objectId?: string; password?: string; _hashed_password?: string; sessionToken?: string; authData?: any },
@@ -416,7 +416,7 @@ interface RelationUpdate {
 class DatabaseController {
   adapter: StorageAdapter;
   schemaCache: any;
-  schemaPromise?: Promise<SchemaController.SchemaController>;
+  schemaPromise?: Promise<SchemaController>;
   _transactionalSession?: any;
   options: ParseServerOptions;
   idempotencyOptions: any;
@@ -443,7 +443,7 @@ class DatabaseController {
   }
 
   validateClassName(className: string): Promise<void> {
-    if (!SchemaController.classNameIsValid(className)) {
+    if (!classNameIsValid(className)) {
       return Promise.reject(
         new Parse.Error(Parse.Error.INVALID_CLASS_NAME, 'invalid className: ' + className)
       );
@@ -454,11 +454,11 @@ class DatabaseController {
   // Returns a promise for a schemaController.
   loadSchema(
     options: LoadSchemaOptions = { clearCache: false }
-  ): Promise<SchemaController.SchemaController> {
+  ): Promise<SchemaController> {
     if (this.schemaPromise != null) {
       return this.schemaPromise;
     }
-    this.schemaPromise = SchemaController.load(this.adapter, options);
+    this.schemaPromise = load(this.adapter, options);
     this.schemaPromise.then(
       () => delete this.schemaPromise,
       () => delete this.schemaPromise
@@ -467,9 +467,9 @@ class DatabaseController {
   }
 
   loadSchemaIfNeeded(
-    schemaController: SchemaController.SchemaController,
+    schemaController: SchemaController,
     options: LoadSchemaOptions = { clearCache: false }
-  ): Promise<SchemaController.SchemaController> {
+  ): Promise<SchemaController> {
     return schemaController ? Promise.resolve(schemaController) : this.loadSchema(options);
   }
 
@@ -496,13 +496,13 @@ class DatabaseController {
     query: any,
     runOptions: QueryOptions,
     maintenance: boolean
-  ): Promise<boolean> {
+  ) {
     let schema;
     const acl = runOptions.acl;
     const isMaster = acl === undefined;
     var aclGroup: string[] = acl || [];
     return this.loadSchema()
-      .then(s => {
+      .then((s): Promise<void | boolean> => {
         schema = s;
         if (isMaster) {
           return Promise.resolve();
@@ -521,7 +521,7 @@ class DatabaseController {
     { acl, many, upsert, addsField }: FullQueryOptions = {},
     skipSanitization: boolean = false,
     validateOnly: boolean = false,
-    validSchemaController: SchemaController.SchemaController
+    validSchemaController: SchemaController
   ): Promise<any> {
     try {
       Utils.checkProhibitedKeywords(this.options, update);
@@ -594,7 +594,7 @@ class DatabaseController {
                 }
                 const rootFieldName = getRootFieldName(fieldName);
                 if (
-                  !SchemaController.fieldNameIsValid(rootFieldName, className) &&
+                  !fieldNameIsValid(rootFieldName, className) &&
                   !isSpecialUpdateKey(rootFieldName)
                 ) {
                   throw new Parse.Error(
@@ -795,7 +795,7 @@ class DatabaseController {
     className: string,
     query: any,
     { acl }: QueryOptions = {},
-    validSchemaController: SchemaController.SchemaController
+    validSchemaController: SchemaController
   ): Promise<any> {
     const isMaster = acl === undefined;
     const aclGroup = acl || [];
@@ -858,7 +858,7 @@ class DatabaseController {
     object: any,
     { acl }: QueryOptions = {},
     validateOnly: boolean = false,
-    validSchemaController: SchemaController.SchemaController
+    validSchemaController: SchemaController
   ): Promise<any> {
     try {
       Utils.checkProhibitedKeywords(this.options, object);
@@ -895,7 +895,7 @@ class DatabaseController {
             }
             return this.adapter.createObject(
               className,
-              SchemaController.convertSchemaToAdapterSchema(schema),
+              convertSchemaToAdapterSchema(schema),
               object,
               this._transactionalSession
             );
@@ -917,12 +917,12 @@ class DatabaseController {
   }
 
   canAddField(
-    schema: SchemaController.SchemaController,
+    schema: SchemaController,
     className: string,
     object: any,
     aclGroup: string[],
     runOptions: QueryOptions
-  ): Promise<void> {
+  ) {
     const classSchema = schema.schemaData[className];
     if (!classSchema) {
       return Promise.resolve();
@@ -1220,7 +1220,7 @@ class DatabaseController {
       comment,
     }: any = {},
     auth: any = {},
-    validSchemaController: SchemaController.SchemaController
+    validSchemaController: SchemaController
   ): Promise<any> {
     const isMaintenance = auth.isMaintenance;
     const isMaster = acl === undefined || isMaintenance;
@@ -1274,7 +1274,7 @@ class DatabaseController {
               throw new Parse.Error(Parse.Error.INVALID_KEY_NAME, `Cannot sort by ${fieldName}`);
             }
             const rootFieldName = getRootFieldName(fieldName);
-            if (!SchemaController.fieldNameIsValid(rootFieldName, className)) {
+            if (!fieldNameIsValid(rootFieldName, className)) {
               throw new Parse.Error(
                 Parse.Error.INVALID_KEY_NAME,
                 `Invalid field name: ${fieldName}.`
@@ -1521,7 +1521,7 @@ class DatabaseController {
   // 3. Constraint the original query so that each PP field must
   // point to caller's id (or contain it in case of PP field being an array)
   addPointerPermissions(
-    schema: SchemaController.SchemaController,
+    schema: SchemaController,
     className: string,
     operation: string,
     query: any,
@@ -1611,7 +1611,7 @@ class DatabaseController {
   }
 
   addProtectedFields(
-    schema: SchemaController.SchemaController | any,
+    schema: SchemaController | any,
     className: string,
     query: any = {},
     aclGroup: any[] = [],
@@ -1744,24 +1744,24 @@ class DatabaseController {
   // have a Parse app without it having a _User collection.
   async performInitialization() {
     await this.adapter.performInitialization({
-      VolatileClassesSchemas: SchemaController.VolatileClassesSchemas,
+      VolatileClassesSchemas: VolatileClassesSchemas,
     });
     const requiredUserFields = {
       fields: {
-        ...SchemaController.defaultColumns._Default,
-        ...SchemaController.defaultColumns._User,
+        ...defaultColumns._Default,
+        ...defaultColumns._User,
       },
     };
     const requiredRoleFields = {
       fields: {
-        ...SchemaController.defaultColumns._Default,
-        ...SchemaController.defaultColumns._Role,
+        ...defaultColumns._Default,
+        ...defaultColumns._Role,
       },
     };
     const requiredIdempotencyFields = {
       fields: {
-        ...SchemaController.defaultColumns._Default,
-        ...SchemaController.defaultColumns._Idempotency,
+        ...defaultColumns._Default,
+        ...defaultColumns._Idempotency,
       },
     };
     await this.loadSchema().then(schema => schema.enforceClassExists('_User'));

@@ -1,7 +1,8 @@
 // schemas.js
 
-var Parse = require('parse/node').Parse,
-  SchemaController = require('../Controllers/SchemaController');
+var Parse = require('parse/node').Parse;
+// SchemaController = require('../Controllers/SchemaController');
+import { classNameIsValid, invalidClassNameMessage } from '../Controllers/SchemaController';
 
 import PromiseRouter from '../PromiseRouter';
 import * as middleware from '../middlewares';
@@ -114,10 +115,10 @@ const deleteSchema = req => {
       "read-only masterKey isn't allowed to delete a schema."
     );
   }
-  if (!SchemaController.classNameIsValid(req.params.className)) {
+  if (!classNameIsValid(req.params.className)) {
     throw new Parse.Error(
       Parse.Error.INVALID_CLASS_NAME,
-      SchemaController.invalidClassNameMessage(req.params.className)
+      invalidClassNameMessage(req.params.className)
     );
   }
   return req.config.database.deleteSchema(req.params.className).then(() => ({ response: {} }));

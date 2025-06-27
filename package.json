@@ -125,6 +125,8 @@
     "build:types": "tsc",
     "watch": "babel --watch src/ -d lib/ --copy-files",
     "watch:ts": "tsc --watch",
+    "watch:js": "babel --watch src/ -d lib/ --copy-files --extensions '.js'",
+    "watch:types": "tsc --watch -p tsconfig.types.json",
     "test:mongodb:runnerstart": "cross-env MONGODB_VERSION=${MONGODB_VERSION:=$npm_config_dbversion} MONGODB_TOPOLOGY=${MONGODB_TOPOLOGY:=standalone} mongodb-runner start -t ${MONGODB_TOPOLOGY} --version ${MONGODB_VERSION} -- --port 27017",
     "test:mongodb:testonly": "cross-env MONGODB_VERSION=${MONGODB_VERSION:=$npm_config_dbversion} MONGODB_TOPOLOGY=${MONGODB_TOPOLOGY:=standalone} TESTING=1 jasmine",
     "test:mongodb": "npm run test:mongodb:runnerstart --dbversion=$npm_config_dbversion && npm run test:mongodb:testonly --dbversion=$npm_config_dbversion",
@@ -135,6 +137,8 @@
     "pretest": "cross-env MONGODB_VERSION=${MONGODB_VERSION:=8.0.4} MONGODB_TOPOLOGY=${MONGODB_TOPOLOGY:=standalone} mongodb-runner start -t ${MONGODB_TOPOLOGY} --version ${MONGODB_VERSION} -- --port 27017",
     "testonly": "cross-env MONGODB_VERSION=${MONGODB_VERSION:=8.0.4} MONGODB_TOPOLOGY=${MONGODB_TOPOLOGY:=standalone} TESTING=1 jasmine",
     "test": "npm run testonly",
+    "test:debug": "npm run pretest && cross-env MONGODB_VERSION=${MONGODB_VERSION:=8.0.4} MONGODB_TOPOLOGY=${MONGODB_TOPOLOGY:=standalone} TESTING=1 node --inspect-brk ./node_modules/.bin/jasmine",
+    "test:debug-file": "cross-env MONGODB_VERSION=${MONGODB_VERSION:=8.0.4} MONGODB_TOPOLOGY=${MONGODB_TOPOLOGY:=standalone} TESTING=1 node --inspect-brk ./node_modules/.bin/jasmine --",
     "test:types": "eslint types/tests.ts -c ./types/eslint.config.mjs",
     "posttest": "cross-env mongodb-runner stop --all",
     "coverage": "cross-env MONGODB_VERSION=${MONGODB_VERSION:=8.0.4} MONGODB_TOPOLOGY=${MONGODB_TOPOLOGY:=standalone} TESTING=1 nyc jasmine",
@@ -143,7 +147,8 @@
     "prepare": "npm run build",
     "postinstall": "node -p 'require(\"./postinstall.js\")()'",
     "madge:circular": "node_modules/.bin/madge ./src --circular",
-    "kill": "cross-env mongodb-runner stop --all; lsof -ti:27017 | xargs -r kill"
+    "kill": "cross-env mongodb-runner stop --all; lsof -ti:27017 | xargs -r kill",
+    "clean": "rm -rf lib"
   },
   "types": "types/index.d.ts",
   "engines": {

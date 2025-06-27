@@ -46,6 +46,8 @@ node_modules
 
 # Babel.js
 lib/
+lib-ok/
+lib-fail/
 # types/* once we have full typescript support, we can generate types from the typescript files
 !types/tsconfig.json
 

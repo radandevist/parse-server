@@ -5,15 +5,15 @@
 const request = require('../lib/request');
 const Parse = require('parse/node');
 const Config = require('../lib/Config');
-const SchemaController = require('../lib/Controllers/SchemaController');
+const { defaultColumns, convertSchemaToAdapterSchema } = require('../lib/Controllers/SchemaController');
 const TestUtils = require('../lib/TestUtils');
 
-const userSchema = SchemaController.convertSchemaToAdapterSchema({
+const userSchema = convertSchemaToAdapterSchema({
   className: '_User',
   fields: Object.assign(
     {},
-    SchemaController.defaultColumns._Default,
-    SchemaController.defaultColumns._User
+    defaultColumns._Default,
+    defaultColumns._User
   ),
 });
 const headers = {

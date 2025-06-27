@@ -1,4 +1,4 @@
-import * as SchemaController from './SchemaController';
+import SchemaController from './SchemaController';
 import { StorageAdapter } from '../Adapters/Storage/StorageAdapter';
 import type { LoadSchemaOptions } from './types';
 import type { ParseServerOptions } from '../Options';
@@ -8,7 +8,7 @@ declare const filterSensitiveData: (isMaster: boolean, isMaintenance: boolean, a
     user?: {
         id: string;
     };
-}, operation: string, schema: SchemaController.SchemaController | any, className: string, protectedFields: string[] | null, object: {
+}, operation: string, schema: SchemaController | any, className: string, protectedFields: string[] | null, object: {
     [key: string]: any;
     objectId?: string;
     password?: string;
@@ -31,7 +31,7 @@ interface RelationUpdate {
 declare class DatabaseController {
     adapter: StorageAdapter;
     schemaCache: any;
-    schemaPromise?: Promise<SchemaController.SchemaController>;
+    schemaPromise?: Promise<SchemaController>;
     _transactionalSession?: any;
     options: ParseServerOptions;
     idempotencyOptions: any;
@@ -39,11 +39,11 @@ declare class DatabaseController {
     collectionExists(className: string): Promise<boolean>;
     purgeCollection(className: string): Promise<void>;
     validateClassName(className: string): Promise<void>;
-    loadSchema(options?: LoadSchemaOptions): Promise<SchemaController.SchemaController>;
-    loadSchemaIfNeeded(schemaController: SchemaController.SchemaController, options?: LoadSchemaOptions): Promise<SchemaController.SchemaController>;
+    loadSchema(options?: LoadSchemaOptions): Promise<SchemaController>;
+    loadSchemaIfNeeded(schemaController: SchemaController, options?: LoadSchemaOptions): Promise<SchemaController>;
     redirectClassNameForKey(className: string, key: string): Promise<string | undefined>;
-    validateObject(className: string, object: any, query: any, runOptions: QueryOptions, maintenance: boolean): Promise<boolean>;
-    update(className: string, query: any, update: any, { acl, many, upsert, addsField }: FullQueryOptions, skipSanitization: boolean, validateOnly: boolean, validSchemaController: SchemaController.SchemaController): Promise<any>;
+    validateObject(className: string, object: any, query: any, runOptions: QueryOptions, maintenance: boolean): Promise<any>;
+    update(className: string, query: any, update: any, { acl, many, upsert, addsField }: FullQueryOptions, skipSanitization: boolean, validateOnly: boolean, validSchemaController: SchemaController): Promise<any>;
     collectRelationUpdates(className: string, objectId: string | undefined, update: {
         [key: string]: any;
         objectId?: string;
@@ -54,9 +54,9 @@ declare class DatabaseController {
     }, ops: RelationUpdate[]): Promise<void>;
     addRelation(key: string, fromClassName: string, fromId: string, toId: string): Promise<any>;
     removeRelation(key: string, fromClassName: string, fromId: string, toId: string): Promise<void>;
-    destroy(className: string, query: any, { acl }: QueryOptions, validSchemaController: SchemaController.SchemaController): Promise<any>;
-    create(className: string, object: any, { acl }: QueryOptions, validateOnly: boolean, validSchemaController: SchemaController.SchemaController): Promise<any>;
-    canAddField(schema: SchemaController.SchemaController, className: string, object: any, aclGroup: string[], runOptions: QueryOptions): Promise<void>;
+    destroy(className: string, query: any, { acl }: QueryOptions, validSchemaController: SchemaController): Promise<any>;
+    create(className: string, object: any, { acl }: QueryOptions, validateOnly: boolean, validSchemaController: SchemaController): Promise<any>;
+    canAddField(schema: SchemaController, className: string, object: any, aclGroup: string[], runOptions: QueryOptions): Promise<boolean> | Promise<void>;
     /**
      * Delete all classes and clears the schema cache
      *
@@ -70,7 +70,7 @@ declare class DatabaseController {
     reduceRelationKeys(className: string, query: any, queryOptions: any): Promise<void> | void;
     addInObjectIdsIds(ids: string[] | null, query: any): any;
     addNotInObjectIdsIds(ids: string[], query: any): any;
-    find(className: string, query: any, { skip, limit, acl, sort, count, keys, op, distinct, pipeline, readPreference, hint, caseInsensitive, explain, comment, }: any, auth: any, validSchemaController: SchemaController.SchemaController): Promise<any>;
+    find(className: string, query: any, { skip, limit, acl, sort, count, keys, op, distinct, pipeline, readPreference, hint, caseInsensitive, explain, comment, }: any, auth: any, validSchemaController: SchemaController): Promise<any>;
     deleteSchema(className: string): Promise<void>;
     objectToEntriesStrings(query: {
         [key: string]: any;
@@ -85,8 +85,8 @@ declare class DatabaseController {
     }): {
         [key: string]: any;
     };
-    addPointerPermissions(schema: SchemaController.SchemaController, className: string, operation: string, query: any, aclGroup?: any[]): any;
-    addProtectedFields(schema: SchemaController.SchemaController | any, className: string, query?: any, aclGroup?: any[], auth?: any, queryOptions?: FullQueryOptions): null | string[];
+    addPointerPermissions(schema: SchemaController, className: string, operation: string, query: any, aclGroup?: any[]): any;
+    addProtectedFields(schema: SchemaController | any, className: string, query?: any, aclGroup?: any[], auth?: any, queryOptions?: FullQueryOptions): null | string[];
     createTransactionalSession(): any;
     commitTransactionalSession(): any;
     abortTransactionalSession(): any;

@@ -25,7 +25,7 @@ declare class ParseLiveQueryServer {
     }>;
     _matchesCLP(classLevelPermissions?: any, object?: any, client?: any, requestId?: number, op?: string): Promise<any>;
     _filterSensitiveData(classLevelPermissions?: any, res?: any, client?: any, requestId?: number, op?: string, query?: any): Promise<void>;
-    _getCLPOperation(query: any): "get" | "find";
+    _getCLPOperation(query: any): "find" | "get";
     _verifyACL(acl: any, token: string): Promise<boolean>;
     getAuthFromClient(client: any, requestId: number, sessionToken?: string): Promise<Auth>;
     _checkWatchFields(client: any, requestId: any, message: any): any;
