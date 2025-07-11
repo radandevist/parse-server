@@ -8,6 +8,9 @@
     "noImplicitAny": false,
     "allowJs": false,
     "skipLibCheck": true,
+    "strictNullChecks": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "paths": {
       "deepcopy": ["./types/@types/deepcopy"],
     }

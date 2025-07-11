@@ -46,6 +46,7 @@ import Deprecator from './Deprecator/Deprecator';
 import { DefinedSchemas } from './SchemaMigrations/DefinedSchemas';
 import OptionsDefinitions from './Options/Definitions';
 import { resolvingPromise, Connections } from './TestUtils';
+import { ParseServerOptionsSchema, ParseServerOptions as _ParseServerOptions } from './Options/options-convict';
 
 // Mutate the Parse object to add the Cloud Code handlers
 addParseCloud();
@@ -66,8 +67,13 @@ class ParseServer {
    * @param {ParseServerOptions} options the parse server initialization options
    */
   constructor(options: ParseServerOptions) {
+    // validate and set defaults
+    const validationResult = ParseServerOptionsSchema.validate(options);
+    const _options = validationResult.getProperties();
+    const { appId, masterKey, serverURL, javascriptKey } = _options;
+
     // Scan for deprecated Parse Server options
-    Deprecator.scanParseServerOptions(options);
+    Deprecator.scanParseServerOptions(_options);
 
     const interfaces = JSON.parse(JSON.stringify(OptionsDefinitions));
 
@@ -90,14 +96,14 @@ class ParseServer {
     const optionsBlueprint = getValidObject(interfaces['ParseServerOptions']);
 
     function validateKeyNames(original, ref, name = '') {
-      let result = [];
+      let result: any[] = [];
       const prefix = name + (name !== '' ? '.' : '');
       for (const key in original) {
         if (!Object.prototype.hasOwnProperty.call(ref, key)) {
           result.push(prefix + key);
         } else {
           if (ref[key] === '') { continue; }
-          let res = [];
+          let res: any[] = [];
           if (Array.isArray(original[key]) && Array.isArray(ref[key])) {
             const type = ref[key][0];
             original[key].forEach((item, idx) => {
@@ -114,28 +120,28 @@ class ParseServer {
       return result;
     }
 
-    const diff = validateKeyNames(options, optionsBlueprint);
+    const diff = validateKeyNames(/* options */_options, optionsBlueprint);
     if (diff.length > 0) {
       const logger = (logging as any).logger;
       logger.error(`Invalid key(s) found in Parse Server configuration: ${diff.join(', ')}`);
     }
 
     // Set option defaults
-    injectDefaults(options);
-    const {
-      appId = requiredParameter('You must provide an appId!'),
-      masterKey = requiredParameter('You must provide a masterKey!'),
-      javascriptKey,
-      serverURL = requiredParameter('You must provide a serverURL!'),
-    } = options;
+    // injectDefaults(options);
+    // const {
+    //   appId = requiredParameter('You must provide an appId!'),
+    //   masterKey = requiredParameter('You must provide a masterKey!'),
+    //   javascriptKey,
+    //   serverURL = requiredParameter('You must provide a serverURL!'),
+    // } = options;
     // Initialize the node client SDK automatically
     Parse.initialize(appId, javascriptKey || 'unused', masterKey);
     Parse.serverURL = serverURL;
-    Config.validateOptions(options);
-    const allControllers = controllers.getControllers(options);
+    // Config.validateOptions(options);
+    const allControllers = controllers.getControllers(/* options */_options);
 
-    (options as any).state = 'initialized';
-    this.config = Config.put(Object.assign({}, options, allControllers));
+    (/* options */_options as any).state = 'initialized';
+    this.config = Config.put(Object.assign({}, /* options */_options, allControllers));
     this.config.masterKeyIpsStore = new Map();
     this.config.maintenanceKeyIpsStore = new Map();
     logging.setLogger(allControllers.loggerController);
@@ -235,7 +241,7 @@ class ParseServer {
   async handleShutdown() {
     const serverClosePromise = resolvingPromise();
     const liveQueryServerClosePromise = resolvingPromise();
-    const promises = [];
+    const promises: Promise<any>[] = [];
     this.server.close((error) => {
       /* istanbul ignore next */
       if (error) {

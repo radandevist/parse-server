@@ -29,6 +29,7 @@
     "@parse/push-adapter": "6.11.0",
     "bcryptjs": "3.0.2",
     "commander": "13.1.0",
+    "convict": "^6.2.4",
     "cors": "2.8.5",
     "deepcopy": "2.1.0",
     "express": "5.1.0",
@@ -82,6 +83,7 @@
     "@semantic-release/github": "11.0.2",
     "@semantic-release/npm": "12.0.1",
     "@semantic-release/release-notes-generator": "14.0.3",
+    "@types/convict": "^6.1.6",
     "all-node-versions": "13.0.1",
     "apollo-upload-client": "18.0.1",
     "clean-jsdoc-theme": "4.3.0",
@@ -122,7 +124,7 @@
     "lint": "eslint --cache ./ --flag unstable_config_lookup_from_file",
     "lint-fix": "eslint --fix --cache ./ --flag unstable_config_lookup_from_file",
     "build": "babel src/ -d lib/ --copy-files --extensions '.ts,.js'",
-    "build:types": "tsc",
+    "build:types": "tsc --strictNullChecks false",
     "watch": "babel --watch src/ -d lib/ --copy-files",
     "watch:ts": "tsc --watch",
     "test:mongodb:runnerstart": "cross-env MONGODB_VERSION=${MONGODB_VERSION:=$npm_config_dbversion} MONGODB_TOPOLOGY=${MONGODB_TOPOLOGY:=standalone} mongodb-runner start -t ${MONGODB_TOPOLOGY} --version ${MONGODB_VERSION} -- --port 27017",
@@ -142,7 +144,8 @@
     "prettier": "prettier --write {src,spec}/{**/*,*}.js",
     "prepare": "npm run build",
     "postinstall": "node -p 'require(\"./postinstall.js\")()'",
-    "madge:circular": "node_modules/.bin/madge ./src --circular"
+    "madge:circular": "node_modules/.bin/madge ./src --circular",
+    "kill": "kill -9 $(lsof -t -i:27017)"
   },
   "types": "types/index.d.ts",
   "engines": {
