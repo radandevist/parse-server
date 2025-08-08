@@ -8,6 +8,7 @@ var batch = require('./batch'),
   path = require('path'),
   fs = require('fs');
 
+import _ from 'lodash';
 import { ParseServerOptions, LiveQueryServerOptions } from './Options';
 import defaults from './defaults';
 import * as logging from './logger';
@@ -67,14 +68,20 @@ class ParseServer {
    * @param {ParseServerOptions} options the parse server initialization options
    */
   constructor(options: ParseServerOptions) {
-    // validate and set defaults
-    const _config = ParseServerOptionsSchema.load(options)
+    // Extract basic options for convict validation
+    const basicOptions = _.pick(options, ready_keys);
+    const restOptions = _.omit(options, ready_keys);
+    
+    // validate and set defaults for basic options only
+    const _config = ParseServerOptionsSchema.load(basicOptions)
     // .validate({ allowed: "warn" });
     const validatedOptions = _config.getProperties();
-    let _options = options;
-    ready_keys.forEach(key => {
-      _options[key] = validatedOptions[key];
-    });
+    
+    // Merge validated basic options with original options (preserving complex objects)
+    let _options = { ...restOptions, ...validatedOptions };
+    // ready_keys.forEach(key => {
+    //   _options[key] = validatedOptions[key];
+    // });
     const { appId, masterKey, serverURL, javascriptKey } = _options;
 
     // Scan for deprecated Parse Server options
@@ -82,14 +89,29 @@ class ParseServer {
 
     const interfaces = JSON.parse(JSON.stringify(OptionsDefinitions));
 
-    function getValidObject(root) {
+    function getValidObject(root, visited = new Set()) {
       const result = {};
       for (const key in root) {
         if (Object.prototype.hasOwnProperty.call(root[key], 'type')) {
-          if (root[key].type.endsWith('[]')) {
-            result[key] = [getValidObject(interfaces[root[key].type.slice(0, -2)])];
+          const typeName = root[key].type;
+          if (visited.has(typeName)) {
+            // Circular reference detected, return empty object to break the cycle
+            result[key] = '';
+            continue;
+          }
+          if (typeName.endsWith('[]')) {
+            const baseType = typeName.slice(0, -2);
+            if (visited.has(baseType)) {
+              result[key] = [{}];
+            } else {
+              visited.add(baseType);
+              result[key] = [getValidObject(interfaces[baseType], visited)];
+              visited.delete(baseType);
+            }
           } else {
-            result[key] = getValidObject(interfaces[root[key].type]);
+            visited.add(typeName);
+            result[key] = getValidObject(interfaces[typeName], visited);
+            visited.delete(typeName);
           }
         } else {
           result[key] = '';

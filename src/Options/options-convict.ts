@@ -1,12 +1,14 @@
 import _ from 'lodash';
 import { default as convict } from 'convict';
 import requiredParameter from '../requiredParameter';
+import { StorageAdapter } from '../Adapters/Storage/StorageAdapter';
 
 export type ParseServerOptions = {
   appId: string;
   masterKey: string | (() => void);
   serverURL: string;
   javascriptKey?: string;
+  databaseAdapter: StorageAdapter;
 }
 
 export const ready_keys = [
@@ -14,6 +16,7 @@ export const ready_keys = [
   'masterKey',
   'serverURL',
   'javascriptKey',
+  'databaseAdapter',
 ]
 
 export const ParseServerOptionsSchema = convict<ParseServerOptions>({
@@ -76,6 +79,16 @@ export const ParseServerOptionsSchema = convict<ParseServerOptions>({
       if (val === '') {
         throw new Error('javascriptKey cannot be empty');
       }
+    },
+    default: null,
+  },
+  databaseAdapter: {
+    doc: 'Database adapter',
+    format: (val: unknown) => {
+      console.log('💸💸💸💸💸💸💸💸💸💸💸💸💸💸💸💸💸💸💸💸', val);
+      // if (_.isNil(val)) {
+      //   return requiredParameter('You must provide a databaseAdapter!');
+      // }
     },
     default: null,
   },
