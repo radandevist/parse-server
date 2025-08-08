@@ -46,7 +46,7 @@ import Deprecator from './Deprecator/Deprecator';
 import { DefinedSchemas } from './SchemaMigrations/DefinedSchemas';
 import OptionsDefinitions from './Options/Definitions';
 import { resolvingPromise, Connections } from './TestUtils';
-import { ParseServerOptionsSchema, ParseServerOptions as _ParseServerOptions } from './Options/options-convict';
+import { ParseServerOptionsSchema, ParseServerOptions as _ParseServerOptions, ready_keys } from './Options/options-convict';
 
 // Mutate the Parse object to add the Cloud Code handlers
 addParseCloud();
@@ -68,8 +68,13 @@ class ParseServer {
    */
   constructor(options: ParseServerOptions) {
     // validate and set defaults
-    const validationResult = ParseServerOptionsSchema.validate(options);
-    const _options = validationResult.getProperties();
+    const _config = ParseServerOptionsSchema.load(options)
+    // .validate({ allowed: "warn" });
+    const validatedOptions = _config.getProperties();
+    let _options = options;
+    ready_keys.forEach(key => {
+      _options[key] = validatedOptions[key];
+    });
     const { appId, masterKey, serverURL, javascriptKey } = _options;
 
     // Scan for deprecated Parse Server options
@@ -127,7 +132,7 @@ class ParseServer {
     }
 
     // Set option defaults
-    // injectDefaults(options);
+    injectDefaults(/* options */_options);
     // const {
     //   appId = requiredParameter('You must provide an appId!'),
     //   masterKey = requiredParameter('You must provide a masterKey!'),

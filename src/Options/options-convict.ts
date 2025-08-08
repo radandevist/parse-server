@@ -9,6 +9,13 @@ export type ParseServerOptions = {
   javascriptKey?: string;
 }
 
+export const ready_keys = [
+  'appId',
+  'masterKey',
+  'serverURL',
+  'javascriptKey',
+]
+
 export const ParseServerOptionsSchema = convict<ParseServerOptions>({
   appId: {
     doc: 'Your Parse Application ID',
@@ -25,6 +32,7 @@ export const ParseServerOptionsSchema = convict<ParseServerOptions>({
     },
     default: null,
     env: 'PARSE_SERVER_APPLICATION_ID',
+    
   },
   masterKey: {
     doc: 'Your Parse Master Key',
@@ -39,7 +47,7 @@ export const ParseServerOptionsSchema = convict<ParseServerOptions>({
         throw new Error('masterKey cannot be empty');
       } 
     },
-    default: undefined,
+    default: null,
     env: 'PARSE_SERVER_MASTER_KEY',
   },
   serverURL: {
@@ -57,15 +65,19 @@ export const ParseServerOptionsSchema = convict<ParseServerOptions>({
     },
     default: null,
     env: 'PARSE_SERVER_URL',
+    
   },
   javascriptKey: {
     doc: 'Key for the Javascript SDK',
     format: (val: unknown) => {
-      if (val !== null && val !== undefined && typeof val !== 'string') {
+      if (!_.isNil(val) && !_.isString(val)) {
         throw new TypeError('javascriptKey must be a string');
       }
+      if (val === '') {
+        throw new Error('javascriptKey cannot be empty');
+      }
     },
-    default: undefined,
+    default: null,
   },
 });
 

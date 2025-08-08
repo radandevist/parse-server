@@ -524,7 +524,13 @@ class ParseLiveQueryServer {
     if (!parseObject) {
       return false;
     }
-    return matchesQuery(deepcopy(parseObject), subscription.query);
+    // Customizer to avoid deep cloning Buffer objects
+    const customizer = (value: any) => {
+      if (Buffer.isBuffer(value)) {
+        return value;
+      }
+    };
+    return matchesQuery(deepcopy(parseObject, { customizer }), subscription.query);
   }
 
   async _clearCachedRoles(userId: string) {
